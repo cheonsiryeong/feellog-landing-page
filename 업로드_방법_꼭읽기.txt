@@ -1,0 +1,14 @@
+GitHub Pages 업로드 방법
+
+1. 이 zip을 압축 해제합니다.
+2. feellog_v3_googleform 폴더 안으로 들어갑니다.
+3. 그 안에 있는 index.html, feellog_quotes_200_v1.js, images 폴더, audio 폴더를 모두 GitHub 저장소 첫 화면에 업로드합니다.
+4. zip 파일 자체나 feellog_v3_googleform 폴더째 올리면 안 됩니다.
+5. 특히 images/gallery 폴더가 함께 올라가야 감성 이미지가 보입니다.
+
+이 버전 추가사항:
+- 첫 화면에 펀딩 오픈 알림 이메일 입력란 추가
+- 갤러리 화면 추가
+- 감성 이미지 35장 웹용으로 최적화하여 images/gallery에 추가
+- 저장용 위로 카드 배경이 감성 이미지로 바뀌도록 수정
+- 기존 구글폼 이메일 수집 유지

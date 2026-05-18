@@ -1,0 +1,17 @@
+feellog 음원 추가 버전 안내
+
+추가된 파일:
+- audio/on_the_hill_organ.mp3
+- audio/calm_lake.mp3
+
+랜딩페이지 내 표기된 출처:
+- 배경음악 출처: 임샛별 - On the hill (Organ ver.)
+- 배경음악 출처: 이진영 - Calm Lake
+
+GitHub 업로드 방법:
+1. 이 폴더 안의 index.html, feellog_quotes_200_v1.js, images 폴더, audio 폴더를 GitHub 저장소 첫 화면에 업로드합니다.
+2. 기존 audio 폴더가 있다면 새 audio 폴더 안의 mp3 파일 2개가 반드시 포함되게 합니다.
+3. Commit changes를 누른 뒤 GitHub Pages 주소 뒤에 ?v=music1 을 붙여 새로고침합니다.
+
+주의:
+브라우저 정책상 음악은 자동재생되지 않고, 사용자가 버튼을 눌러야 재생됩니다.
