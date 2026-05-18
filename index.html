@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>feellog | 오늘의 마음 날씨</title>
+  <style>
+    :root {
+      --pink-main: #f5a8bd;
+      --pink-deep: #cf6f8d;
+      --text-main: #4a3f42;
+      --text-sub: #7d6d72;
+      --white: rgba(255, 255, 255, 0.86);
+      --shadow: 0 18px 45px rgba(209, 126, 152, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, #ffe1eb 0, transparent 36%),
+        radial-gradient(circle at bottom right, #f8d9ff 0, transparent 32%),
+        linear-gradient(160deg, #fff7fa 0%, #ffeef4 48%, #fdf6ee 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(440px, 100%);
+      min-height: 720px;
+      background: var(--white);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 36px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .petal {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(255, 201, 217, 0.42);
+      filter: blur(2px);
+      z-index: 0;
+    }
+
+    .petal.one { top: -36px; right: -34px; }
+    .petal.two {
+      bottom: 90px;
+      left: -52px;
+      background: rgba(243, 210, 255, 0.36);
+    }
+
+    .screen {
+      display: none;
+      min-height: 720px;
+      padding: 34px 26px 28px;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.42s ease;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .brand {
+      text-align: center;
+      letter-spacing: 0.08em;
+      font-size: 13px;
+      color: var(--pink-deep);
+      font-weight: 700;
+      margin-bottom: 18px;
+      text-transform: lowercase;
+    }
+
+    .hero-image,
+    .result-image {
+      width: 190px;
+      height: 190px;
+      margin: 0 auto 22px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: linear-gradient(145deg, #ffe5ed, #fffaf6);
+      box-shadow: 0 16px 34px rgba(211, 132, 157, 0.24);
+      padding: 8px;
+    }
+
+    .hero-image.fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 72px;
+    }
+
+    h1 {
+      font-size: 33px;
+      line-height: 1.2;
+      text-align: center;
+      margin: 0 0 14px;
+      color: #3e3438;
+    }
+
+    h2 {
+      font-size: 25px;
+      line-height: 1.35;
+      margin: 0 0 14px;
+      text-align: center;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.8;
+      color: var(--text-sub);
+      font-size: 15.5px;
+      word-break: keep-all;
+    }
+
+    .intro-text {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 28px;
+      padding: 22px 20px;
+      box-shadow: 0 10px 28px rgba(198, 132, 151, 0.13);
+    }
+
+    .question {
+      margin-top: 18px;
+      text-align: center;
+    }
+
+    .weather-list,
+    .button-list,
+    .footer-actions {
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 999px;
+      padding: 16px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #f7a6bd, #d77d9a);
+      box-shadow: 0 12px 24px rgba(215, 125, 154, 0.28);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 30px rgba(215, 125, 154, 0.35);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--pink-deep);
+      border: 1px solid rgba(245, 168, 189, 0.55);
+      box-shadow: none;
+    }
+
+    button.small {
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .weather-button {
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--text-main);
+      border: 1px solid rgba(245, 168, 189, 0.34);
+      box-shadow: 0 10px 24px rgba(206, 124, 149, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      text-align: left;
+      border-radius: 24px;
+    }
+
+    .weather-button span:first-child { font-size: 28px; }
+
+    .weather-button strong {
+      display: block;
+      font-size: 17px;
+      margin-bottom: 3px;
+    }
+
+    .weather-button small {
+      color: var(--text-sub);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .spacer { flex: 1; }
+
+    .quote-box {
+      margin-top: 18px;
+      padding: 22px 20px;
+      border-radius: 26px;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.80), rgba(255, 255, 255, 0.80)),
+        var(--result-bg, linear-gradient(145deg, #ffe5ed, #fffaf6));
+      background-size: cover;
+      background-position: center;
+      border: 1px solid rgba(255, 255, 255, 0.75);
+    }
+
+    .quote-box p {
+      color: #5b4c50;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .audio-box,
+    .email-box { margin-top: 18px; }
+
+    audio {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .tiny {
+      text-align: center;
+      font-size: 13px;
+      color: #9b858d;
+      margin-top: 18px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(245, 168, 189, 0.5);
+      border-radius: 18px;
+      padding: 14px 15px;
+      font-size: 15px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--text-main);
+    }
+
+    .mini-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 4px 0 18px;
+    }
+
+    .mini-tabs button {
+      padding: 11px 8px;
+      font-size: 13px;
+      background: rgba(255,255,255,0.76);
+      color: var(--pink-deep);
+      border: 1px solid rgba(245, 168, 189, 0.45);
+      box-shadow: none;
+    }
+
+    .mini-tabs button.active-tab {
+      color: #fff;
+      background: linear-gradient(135deg, #f7a6bd, #d77d9a);
+    }
+
+    .quote-grid {
+      display: grid;
+      gap: 16px;
+      padding-bottom: 10px;
+    }
+
+    .save-card {
+      min-height: 330px;
+      border-radius: 30px;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 14px 32px rgba(149, 102, 128, 0.18);
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .save-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(48, 38, 50, 0.56), rgba(255,255,255,0.08));
+    }
+
+    .save-card-content {
+      position: relative;
+      padding: 24px 20px;
+      color: #fff;
+      width: 100%;
+    }
+
+    .save-card-content .tag {
+      display: inline-block;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      background: rgba(255,255,255,0.24);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 13px;
+    }
+
+    .save-card-content h3 {
+      margin: 0 0 8px;
+      font-size: 21px;
+      line-height: 1.35;
+    }
+
+    .save-card-content p {
+      color: rgba(255,255,255,0.92);
+      font-size: 15px;
+      line-height: 1.72;
+    }
+
+    .save-card-content button {
+      margin-top: 16px;
+      background: rgba(255,255,255,0.88);
+      color: #c66c8a;
+      box-shadow: none;
+    }
+
+
+
+    .promo-panel {
+      margin-top: 18px;
+      padding: 22px 20px;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.84), rgba(255,239,246,.82));
+      border: 1px solid rgba(245, 168, 189, 0.42);
+      box-shadow: 0 12px 30px rgba(198, 132, 151, 0.12);
+    }
+
+    .promo-panel h3 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 19px;
+      color: #4a3f42;
+    }
+
+    .promo-panel p { text-align: center; font-size: 14.5px; }
+
+    .mini-gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 18px 0 10px;
+    }
+
+    .mini-gallery img {
+      width: 100%;
+      aspect-ratio: 6.5 / 15.5;
+      object-fit: cover;
+      border-radius: 18px;
+      box-shadow: 0 10px 20px rgba(117, 84, 105, 0.16);
+      border: 1px solid rgba(255,255,255,.75);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding-bottom: 12px;
+    }
+
+    .gallery-grid img {
+      width: 100%;
+      aspect-ratio: 6.5 / 15.5;
+      object-fit: cover;
+      border-radius: 22px;
+      box-shadow: 0 12px 24px rgba(117, 84, 105, 0.16);
+      border: 1px solid rgba(255,255,255,.78);
+      background: #fff;
+    }
+
+    .email-inline-form {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 0; }
+      .app {
+        min-height: 100vh;
+        border-radius: 0;
+      }
+      .screen {
+        min-height: 100vh;
+        padding: 32px 22px 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="petal one"></div>
+    <div class="petal two"></div>
+
+    <section id="intro" class="screen active">
+      <div class="brand">feellog</div>
+      <img class="hero-image" src="images/sakura.png" alt="사쿠라 물방울 로고" onerror="this.outerHTML='<div class=&quot;hero-image fallback&quot;>🌸</div>'" />
+      <h1>오늘의 마음을<br />조용히 기록해요</h1>
+      <p class="intro-text">
+        지금 당신의 마음은 어떤 날씨인가요?<br />
+        잠시 멈춰, 내 안의 하늘을 바라보세요.<br />
+        사쿠라빛 우산 아래에서 오늘의 감정을 만나봅니다.
+      </p>
+      <div class="promo-panel">
+        <h3>책 속 문장과 감성 이미지를 먼저 만나보세요</h3>
+        <p>흐림, 비, 맑음으로 나뉜 마음 날씨에 따라<br />당신에게 필요한 문장을 조용히 건네드립니다.</p>
+        <div class="mini-gallery" id="homeMiniGallery"></div>
+        <button class="secondary small" onclick="showScreen('gallery'); renderGallery()">감성 이미지 미리보기</button>
+      </div>
+
+      <div class="promo-panel">
+        <h3>펀딩 오픈 알림 신청</h3>
+        <p>이메일을 남기면 feellog 마음 편지와<br />펀딩 오픈 소식을 가장 먼저 보내드릴게요.</p>
+        <form class="email-inline-form" action="https://docs.google.com/forms/d/e/1FAIpQLSdrGNEM4p8WCVpn_1JclDgrUHaNWrbQ8aJnyX0FQcrvuLCPeQ/formResponse" method="POST" target="hidden_iframe_intro" onsubmit="handleInlineEmailSubmit('thanksIntro','emailInputIntro')">
+          <input id="emailInputIntro" type="email" name="entry.366340186" placeholder="your@email.com" required />
+          <input type="hidden" name="entry.1330677742" value="랜딩" />
+          <input type="hidden" name="entry.585220612" value="feellog-landing" />
+          <button type="submit">펀딩 알림 신청하기</button>
+        </form>
+        <iframe name="hidden_iframe_intro" style="display:none;"></iframe>
+        <p id="thanksIntro" class="tiny" style="display:none;">신청이 완료되었어요. 따뜻한 소식을 보내드릴게요.</p>
+      </div>
+
+      <div class="button-list">
+        <button onclick="showScreen('test')">오늘의 마음 날씨 확인하기</button>
+        <button class="secondary" onclick="showScreen('cards'); renderCards('all')">랜덤 위로 카드 한 장 보기</button>
+      </div>
+      <p class="tiny">당신의 마음에 작은 우산을 씌워드릴게요.</p>
+      <div class="spacer"></div>
+    </section>
+
+    <section id="test" class="screen">
+      <div class="brand">feellog test</div>
+      <img class="hero-image" src="images/umbrella.png" alt="우산 아이콘" onerror="this.outerHTML='<div class=&quot;hero-image fallback&quot;>☂️</div>'" />
+      <div class="card question">
+        <h2>지금 당신의 마음과<br />가장 가까운 날씨는?</h2>
+        <p>정답은 없어요. 지금 가장 끌리는 마음을 골라주세요.</p>
+      </div>
+
+      <div class="weather-list">
+        <button class="weather-button" onclick="showResult('cloudy')">
+          <span>☁️</span>
+          <span><strong>흐림</strong><small>마음이 뿌옇고 조금 지쳐 있어요.</small></span>
+        </button>
+        <button class="weather-button" onclick="showResult('rainy')">
+          <span>🌧️</span>
+          <span><strong>비</strong><small>감정이 조용히 차오르고 있어요.</small></span>
+        </button>
+        <button class="weather-button" onclick="showResult('sunny')">
+          <span>☀️</span>
+          <span><strong>맑음</strong><small>조금씩 빛이 들어오고 있어요.</small></span>
+        </button>
+      </div>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="showScreen('intro')">처음으로 돌아가기</button>
+    </section>
+
+    <section id="result" class="screen">
+      <div class="brand">feellog result</div>
+      <img id="resultImage" class="result-image" src="images/drop.png" alt="마음 날씨 이미지" />
+      <h2 id="resultTitle">오늘의 마음 날씨</h2>
+      <p id="resultDescription" class="intro-text"></p>
+
+      <div id="quoteBox" class="quote-box">
+        <p id="resultQuote"></p>
+      </div>
+
+      <div class="footer-actions">
+        <button id="saveResultButton" onclick="downloadCurrentResult()">이 글귀 카드 저장하기</button>
+        <button class="secondary" onclick="refreshResultQuote()">다른 글귀 하나 더 보기</button>
+        <button class="secondary" onclick="showScreen('gallery'); renderGallery()">감성 이미지 보기</button>
+      </div>
+
+      <div class="audio-box card">
+        <p><strong>내 목소리로 위로 듣기</strong></p>
+        <audio id="resultAudio" controls></audio>
+        <p class="tiny">아직 음성 파일을 넣지 않았다면 재생되지 않아도 괜찮아요.</p>
+      </div>
+
+      <div class="email-box card">
+        <p><strong>마음 편지 받아보기</strong></p>
+        <p style="margin: 6px 0 12px;">더 긴 위로 문장을 받아보고 싶다면 이메일을 남겨주세요.</p>
+
+        <form
+          id="emailForm"
+          action="https://docs.google.com/forms/d/e/1FAIpQLSdrGNEM4p8WCVpn_1JclDgrUHaNWrbQ8aJnyX0FQcrvuLCPeQ/formResponse"
+          method="POST"
+          target="hidden_iframe"
+          onsubmit="handleEmailSubmit()"
+        >
+          <input
+            id="emailInput"
+            type="email"
+            name="entry.366340186"
+            placeholder="your@email.com"
+            required
+          />
+
+          <input
+            id="moodInput"
+            type="hidden"
+            name="entry.1330677742"
+            value=""
+          />
+
+          <input
+            type="hidden"
+            name="entry.585220612"
+            value="feellog"
+          />
+
+          <button type="submit" style="margin-top: 12px;">마음 편지 신청하기</button>
+        </form>
+
+        <iframe name="hidden_iframe" style="display:none;"></iframe>
+
+        <p id="thanksMessage" class="tiny" style="display:none;">
+          신청이 완료되었어요. 당신의 마음에 맞는 편지를 준비할게요.
+        </p>
+        <p class="tiny">
+          남겨주신 이메일은 feellog 마음 편지 발송 용도로만 조용히 보관할게요.
+        </p>
+      </div>
+
+      <div class="footer-actions">
+        <button onclick="showScreen('test')">다시 선택하기</button>
+        <button class="secondary" onclick="showScreen('intro')">처음 화면으로</button>
+      </div>
+    </section>
+
+    <section id="cards" class="screen">
+      <div class="brand">feellog cards</div>
+      <h2>저장용 위로 카드</h2>
+      <p class="intro-text">PDF 원고에서 뽑은 200개의 문장 중<br />지금 필요한 한 장을 랜덤으로 만나보세요.</p>
+      <div class="mini-tabs">
+        <button id="tab-all" onclick="renderCards('all')">랜덤</button>
+        <button id="tab-cloudy" onclick="renderCards('cloudy')">흐림</button>
+        <button id="tab-rainy" onclick="renderCards('rainy')">비</button>
+        <button id="tab-sunny" onclick="renderCards('sunny')">맑음</button>
+      </div>
+      <div id="quoteGrid" class="quote-grid"></div>
+      <button class="secondary small" onclick="renderCards(currentCardFilter || 'all')">다른 카드 한 장 보기</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="showScreen('intro')">처음 화면으로</button>
+    </section>
+
+
+    <section id="gallery" class="screen">
+      <div class="brand">feellog gallery</div>
+      <h2>감성 이미지 미리보기</h2>
+      <p class="intro-text">글귀달력과 에세이 삽화로 확장할 수 있는<br />feellog의 몽환적인 장면들을 모았어요.</p>
+      <div id="galleryGrid" class="gallery-grid"></div>
+      <div class="promo-panel">
+        <h3>마음 편지와 펀딩 소식 받기</h3>
+        <form class="email-inline-form" action="https://docs.google.com/forms/d/e/1FAIpQLSdrGNEM4p8WCVpn_1JclDgrUHaNWrbQ8aJnyX0FQcrvuLCPeQ/formResponse" method="POST" target="hidden_iframe_gallery" onsubmit="handleInlineEmailSubmit('thanksGallery','emailInputGallery')">
+          <input id="emailInputGallery" type="email" name="entry.366340186" placeholder="your@email.com" required />
+          <input type="hidden" name="entry.1330677742" value="갤러리" />
+          <input type="hidden" name="entry.585220612" value="feellog-gallery" />
+          <button type="submit">알림 신청하기</button>
+        </form>
+        <iframe name="hidden_iframe_gallery" style="display:none;"></iframe>
+        <p id="thanksGallery" class="tiny" style="display:none;">신청이 완료되었어요.</p>
+      </div>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="showScreen('intro')">처음 화면으로</button>
+    </section>
+
+  </main>
+
+  <script src="feellog_quotes_200_v1.js"></script>
+  <script>
+    let currentResult = null;
+    let currentQuoteItem = null;
+    let currentVisualImage = null;
+    let currentCardFilter = "all";
+
+    const results = {
+      cloudy: {
+        label: "흐림",
+        title: "오늘의 마음 날씨: 흐림",
+        description: "지금의 당신은 조금 지쳐 있고, 마음이 선명하게 보이지 않는 날일지도 몰라요.",
+        quote: "오늘은 선명하지 않아도 괜찮아요. 흐린 날에도 꽃은 조용히 피어나고, 당신도 충분히 아름답게 존재하고 있어요.",
+        image: "images/cloudy.jpg",
+        audio: "audio/cloudy.mp3"
+      },
+      rainy: {
+        label: "비",
+        title: "오늘의 마음 날씨: 비",
+        description: "오래 참아온 감정이 조용히 흘러내리고 있는 날일 수 있어요.",
+        quote: "울고 싶은 마음은 약한 마음이 아니에요. 오래 버텨온 당신의 마음이 잠시 쉬고 싶다고 말하는 중이에요.",
+        image: "images/rainy.jpg",
+        audio: "audio/rainy.mp3"
+      },
+      sunny: {
+        label: "맑음",
+        title: "오늘의 마음 날씨: 맑음",
+        description: "당신의 마음 안에 조금씩 빛이 들어오고 있어요. 아주 천천히 회복되는 중이에요.",
+        quote: "오늘의 작은 빛이 내일의 당신을 다시 따뜻하게 비춰줄 거예요. 천천히 피어나도 괜찮아요.",
+        image: "images/sunny.jpg",
+        audio: "audio/sunny.mp3"
+      }
+    };
+
+    const galleryImages = [
+      "images/gallery/feellog_art_001.jpg",
+      "images/gallery/feellog_art_002.jpg",
+      "images/gallery/feellog_art_003.jpg",
+      "images/gallery/feellog_art_004.jpg",
+      "images/gallery/feellog_art_005.jpg",
+      "images/gallery/feellog_art_006.jpg",
+      "images/gallery/feellog_art_007.jpg",
+      "images/gallery/feellog_art_008.jpg",
+      "images/gallery/feellog_art_009.jpg",
+      "images/gallery/feellog_art_010.jpg",
+      "images/gallery/feellog_art_011.jpg",
+      "images/gallery/feellog_art_012.jpg",
+      "images/gallery/feellog_art_013.jpg",
+      "images/gallery/feellog_art_014.jpg",
+      "images/gallery/feellog_art_015.jpg",
+      "images/gallery/feellog_art_016.jpg",
+      "images/gallery/feellog_art_017.jpg",
+      "images/gallery/feellog_art_018.jpg",
+      "images/gallery/feellog_art_019.jpg",
+      "images/gallery/feellog_art_020.jpg",
+      "images/gallery/feellog_art_021.jpg",
+      "images/gallery/feellog_art_022.jpg",
+      "images/gallery/feellog_art_023.jpg",
+      "images/gallery/feellog_art_024.jpg",
+      "images/gallery/feellog_art_025.jpg",
+      "images/gallery/feellog_art_026.jpg",
+      "images/gallery/feellog_art_027.jpg",
+      "images/gallery/feellog_art_028.jpg",
+      "images/gallery/feellog_art_029.jpg",
+      "images/gallery/feellog_art_030.jpg",
+      "images/gallery/feellog_art_031.jpg",
+      "images/gallery/feellog_art_032.jpg",
+      "images/gallery/feellog_art_033.jpg",
+      "images/gallery/feellog_art_034.jpg",
+      "images/gallery/feellog_art_035.jpg"
+    ];
+
+    function pickRandomGalleryImage() {
+      if (!galleryImages.length) return "images/drop.png";
+      return galleryImages[Math.floor(Math.random() * galleryImages.length)];
+    }
+
+    function setRandomResultVisual(type) {
+      currentVisualImage = pickRandomGalleryImage();
+      const resultImage = document.getElementById('resultImage');
+      resultImage.src = currentVisualImage;
+      resultImage.onerror = function () { this.src = results[type].image || 'images/drop.png'; };
+
+      const quoteBox = document.getElementById('quoteBox');
+      quoteBox.style.setProperty('--result-bg', `url(${currentVisualImage})`);
+    }
+
+    const emotionTypeMap = { "흐림": "cloudy", "비": "rainy", "맑음": "sunny" };
+    const rawFeelLogQuotes = (typeof FEELLOG_QUOTES !== "undefined" && Array.isArray(FEELLOG_QUOTES)) ? FEELLOG_QUOTES : [];
+    const quoteCards = rawFeelLogQuotes.map(item => ({
+      type: emotionTypeMap[item.emotion] || "cloudy",
+      title: `${item.emotion || "오늘"}의 문장`,
+      quote: item.quote,
+      id: item.id
+    }));
+
+    const fallbackQuoteCards = [
+      { type: "cloudy", title: "흐린 날의 문장", quote: "오늘은 아무것도 증명하지 않아도 괜찮아요. 당신은 쉬는 동안에도 충분히 소중해요." },
+      { type: "rainy", title: "비 오는 마음에게", quote: "울고 싶은 날은 마음이 무너지는 날이 아니라, 오래 참은 마음이 숨을 쉬는 날이에요." },
+      { type: "sunny", title: "맑아지는 중", quote: "아직 완전히 괜찮지 않아도 괜찮아요. 조금씩 밝아지는 중이라는 것만으로 충분해요." }
+    ];
+
+    if (!quoteCards.length) {
+      quoteCards.push(...fallbackQuoteCards);
+    }
+
+    function pickRandomQuote(type) {
+      const list = quoteCards.filter(card => card.type === type);
+      if (!list.length) return { type, title: results[type].title, quote: results[type].quote };
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function showResult(type) {
+      currentResult = type;
+      const data = results[type];
+      const moodInput = document.getElementById('moodInput');
+      if (moodInput) moodInput.value = data.label;
+      document.getElementById('resultTitle').textContent = data.title;
+      document.getElementById('resultDescription').textContent = data.description;
+      currentQuoteItem = pickRandomQuote(type);
+      document.getElementById('resultQuote').textContent = currentQuoteItem.quote;
+
+      setRandomResultVisual(type);
+
+      const audio = document.getElementById('resultAudio');
+      audio.src = data.audio;
+      audio.load();
+
+      showScreen('result');
+    }
+
+    function refreshResultQuote() {
+      const type = currentResult || 'cloudy';
+      currentQuoteItem = pickRandomQuote(type);
+      document.getElementById('resultQuote').textContent = currentQuoteItem.quote;
+      setRandomResultVisual(type);
+    }
+
+    function renderCards(filter) {
+      currentCardFilter = filter;
+      document.querySelectorAll('.mini-tabs button').forEach(btn => btn.classList.remove('active-tab'));
+      const activeTab = document.getElementById(`tab-${filter}`);
+      if (activeTab) activeTab.classList.add('active-tab');
+
+      const grid = document.getElementById('quoteGrid');
+      grid.innerHTML = "";
+      const list = filter === "all" ? quoteCards : quoteCards.filter(card => card.type === filter);
+      const sourceList = list.length ? list : quoteCards;
+      const card = sourceList[Math.floor(Math.random() * sourceList.length)];
+      const realIndex = quoteCards.indexOf(card);
+      const data = results[card.type];
+      const randomImage = pickRandomGalleryImage();
+      const item = document.createElement('article');
+      item.className = 'save-card';
+      item.style.backgroundImage = `url(${randomImage || data.image})`;
+      item.innerHTML = `
+        <div class="save-card-content">
+          <span class="tag">feellog · ${data.label}</span>
+          <h3>${card.title}</h3>
+          <p>${card.quote}</p>
+          <button class="small" onclick="downloadQuoteCard(${realIndex}, '${randomImage || data.image}')">이 카드 저장하기</button>
+        </div>
+      `;
+      grid.appendChild(item);
+    }
+
+    function downloadCurrentResult() {
+      const data = results[currentResult || "cloudy"];
+      createAndDownloadCard({
+        label: data.label,
+        title: currentQuoteItem ? `${data.label}의 문장` : data.title,
+        quote: currentQuoteItem ? currentQuoteItem.quote : data.quote,
+        image: currentVisualImage || data.image,
+        filename: `feellog-${currentResult || "card"}.png`
+      });
+    }
+
+    function downloadQuoteCard(index, imageSrc) {
+      const card = quoteCards[index];
+      const data = results[card.type];
+      createAndDownloadCard({
+        label: data.label,
+        title: card.title,
+        quote: card.quote,
+        image: imageSrc || data.image,
+        filename: `feellog-${card.type}-${index + 1}.png`
+      });
+    }
+
+    function wrapText(ctx, text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let line = '';
+
+      for (let i = 0; i < words.length; i++) {
+        const testLine = line + words[i] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && i > 0) {
+          lines.push(line.trim());
+          line = words[i] + ' ';
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line.trim());
+      return lines;
+    }
+
+    function createAndDownloadCard({ label, title, quote, image, filename }) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1350;
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.src = image;
+
+      img.onload = function () {
+        const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+        const x = (canvas.width / 2) - (img.width / 2) * scale;
+        const y = (canvas.height / 2) - (img.height / 2) * scale;
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, 'rgba(255, 245, 250, 0.22)');
+        gradient.addColorStop(0.48, 'rgba(80, 56, 78, 0.12)');
+        gradient.addColorStop(1, 'rgba(58, 38, 56, 0.68)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.24)';
+        roundRect(ctx, 74, 82, 230, 54, 27);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 28px Apple SD Gothic Neo, sans-serif';
+        ctx.fillText(`feellog · ${label}`, 102, 119);
+
+        ctx.font = '700 62px Apple SD Gothic Neo, sans-serif';
+        ctx.fillStyle = '#ffffff';
+        const titleLines = wrapText(ctx, title, 860);
+        let currentY = 930;
+        titleLines.forEach(line => {
+          ctx.fillText(line, 90, currentY);
+          currentY += 76;
+        });
+
+        ctx.font = '400 42px Apple SD Gothic Neo, sans-serif';
+        const quoteLines = wrapText(ctx, quote, 890);
+        currentY += 24;
+        quoteLines.forEach(line => {
+          ctx.fillText(line, 90, currentY);
+          currentY += 58;
+        });
+
+        ctx.font = '400 26px Apple SD Gothic Neo, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        ctx.fillText('오늘의 마음을 조용히 기록해요', 90, 1262);
+
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+
+      img.onerror = function () {
+        alert('이미지를 불러오지 못했어요. images 폴더와 파일명을 확인해주세요.');
+      };
+    }
+
+
+
+    function renderHomeMiniGallery() {
+      const box = document.getElementById('homeMiniGallery');
+      if (!box) return;
+      box.innerHTML = '';
+      galleryImages.slice(0, 6).forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'feellog 감성 이미지';
+        box.appendChild(img);
+      });
+    }
+
+    function renderGallery() {
+      const grid = document.getElementById('galleryGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      galleryImages.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'feellog 감성 이미지';
+        grid.appendChild(img);
+      });
+    }
+
+    function handleInlineEmailSubmit(messageId, inputId) {
+      const msg = document.getElementById(messageId);
+      const input = document.getElementById(inputId);
+      if (msg) {
+        setTimeout(() => { msg.style.display = 'block'; }, 500);
+      }
+      if (input) {
+        setTimeout(() => { input.value = ''; }, 700);
+      }
+    }
+
+    function handleEmailSubmit() {
+      const thanksMessage = document.getElementById('thanksMessage');
+      const emailInput = document.getElementById('emailInput');
+
+      if (thanksMessage) {
+        setTimeout(() => {
+          thanksMessage.style.display = 'block';
+        }, 500);
+      }
+
+      if (emailInput) {
+        setTimeout(() => {
+          emailInput.value = '';
+        }, 700);
+      }
+    }
+
+    renderHomeMiniGallery();
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+  </script>
+</body>
+</html>
